@@ -3,8 +3,10 @@ import { PrismaClient } from "@prisma/client"
 
 const prisma = new PrismaClient()
 
+
 const app = express()
 app.use(express.json())
+app.get('/favicon.ico', (req, res) => res.status(204))
 
 app.post('/usuarios', async (req, res) => {
 
@@ -80,6 +82,7 @@ const PORT = process.env.PORT || 3000
 app.listen(PORT, () => {
   console.log("Servidor rodando")
 })
+
 
  
 
