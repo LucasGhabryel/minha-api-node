@@ -8,14 +8,14 @@ app.use(express.json())
 
 app.post('/usuarios', async (req, res) => {
 
-  await prisma.user.create({
+  const user = await prisma.user.create({
     data: {
         email: req.body.email,
         name: req.body.name,
         age: req.body.age
     }
-  })
-
+  }) 
+  
   res.status(201).json(user)
 
 })
@@ -30,7 +30,7 @@ app.get('/usuarios', async (req, res) => {
                 email: req.query.email,
                 age: req.query.age
             }
-
+        
         })
 
    } else {
@@ -45,7 +45,7 @@ app.get('/usuarios', async (req, res) => {
 
 app.put('/usuarios/:id', async (req, res) => {
 
-  await prisma.user.update({
+  const user = await prisma.user.update({
     
     where: {
         id: req.params.id
@@ -56,7 +56,9 @@ app.put('/usuarios/:id', async (req, res) => {
         name: req.body.name,
         age: req.body.age
     }
+    
   })
+   res.status(200).json(user)
 })
 
 app.delete('/usuarios/:id', async (req, res) => {
