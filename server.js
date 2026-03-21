@@ -28,7 +28,7 @@ app.get('/usuarios', async (req, res) => {
             where: {
                 name: req.query.name,
                 email: req.query.email,
-                age: Number(req.body.age)
+                age: req.query.age ? Number(req.query.age) : undefined
             }
         
         })
