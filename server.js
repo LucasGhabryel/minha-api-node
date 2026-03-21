@@ -12,7 +12,7 @@ app.post('/usuarios', async (req, res) => {
     data: {
         email: req.body.email,
         name: req.body.name,
-        age: req.body.age
+        age: Number(req.body.age)
     }
   }) 
   
@@ -28,7 +28,7 @@ app.get('/usuarios', async (req, res) => {
             where: {
                 name: req.query.name,
                 email: req.query.email,
-                age: req.query.age
+                age: Number(req.body.age)
             }
         
         })
@@ -54,7 +54,7 @@ app.put('/usuarios/:id', async (req, res) => {
     data: {
         email: req.body.email,
         name: req.body.name,
-        age: req.body.age
+        age: Number(req.body.age)
     }
     
   })
@@ -75,7 +75,9 @@ app.delete('/usuarios/:id', async (req, res) => {
     })
 
 
-app.listen(3000, () => {
+const PORT = process.env.PORT || 3000
+
+app.listen(PORT, () => {
   console.log("Servidor rodando")
 })
 
