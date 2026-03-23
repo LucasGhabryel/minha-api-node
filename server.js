@@ -4,28 +4,94 @@ import { PrismaClient } from "@prisma/client"
 
 const prisma = new PrismaClient()
 
-
 const app = express()
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: true}))
 app.get('/favicon.ico', (req, res) => res.status(204))
 
+
+// ROTA PRINCIPAL //
+
 app.get('/', (req, res) => {
     res.status(200).json({message: "API funcionando!"})
 })
 
+//
+
+// ROTAS DE AUTENTICAÇÃO //
+
+app.post('/login', async (req, res) =>{
+
+    if (!req.body.email || !req.body.senha) {
+        return res.status(400).json({
+            status: "error",
+            message: "Email e senha são obrigatórios"
+        })
+    }
+    try {
+        const user = await prisma.user.findUnique({
+            where: { email: req.body.email}
+        })
+
+        if (!user) {
+            return res.status(404).json({
+                status: "error",
+                message: "Usuário não encontrado"
+            })
+        }
+
+        if (req.body.senha !== user.senha) {
+            return res.status(401).json({
+                status: "error",
+                message: "Senha incorreta"
+            })
+        }
+        res.status(200).json({
+            status: "success",
+            message: "Login bem-sucedido",
+            data: {
+                id: user.id,
+                nome: user.nome,
+                email: user.email,
+                tipo: user.tipo
+            }
+        })
+    } catch (error) {
+        res.status(500).json({
+            status: "error",
+            message: "Erro ao realizar login"
+        })
+    }
+})
+
+// ROTAS DE USUARIOS //
+
 app.post('/usuarios', async (req, res) => {
-try {
+if (!req.body.email || !req.body.name || !req.body.age) {
+    return res.status(400).json({
+        status: "error",
+        message: "Campos obrigatórios não preenchidos"
+    })
+}
+
+    try {
   const user = await prisma.user.create({
     data: {
         email: req.body.email,
         name: req.body.name,
         age: Number(req.body.age)
     }
+  })
+  res.status(201).json({
+    status: "success",
+    message: "Usuário criado com sucesso",
+    data: user
   }) 
-  res.status(201).json(user)
 } catch (error) {
-    res.status(500).json({ error: "Erro ao criar usuário"})
+    res.status(500).json({
+        status: "error",
+        message: "Erro ao criar usuário"
+    })
 }
 
 })
@@ -44,31 +110,48 @@ try {
     } else {
     users = await prisma.user.findMany()
     }
-    res.status(200).json(users)
+    res.status(200).json({
+        status: "success",
+        message: "Usuários listados com sucesso",
+        data: users
+})
  } catch (error) {
-    res.status(500).json({ error: "Erro ao listar usuários"})
+    res.status(500).json({
+        status: "error",
+        message: "Error ao listar usuários"
+    })
  }
 })
 
 
 app.put('/usuarios/:id', async (req, res) => {
-try{
+if (!req.body.email || !req.body.name || !req.body.age) {
+    return res.status(400).json({
+        status: "error",
+        message: "Campos obrigatórios não preenchidos"
+    })
+}
+     try{
   const user = await prisma.user.update({
-    
     where: {
         id: req.params.id
     },
-    
     data: {
         email: req.body.email,
         name: req.body.name,
         age: Number(req.body.age)
     }
-    
-  })
-   res.status(200).json(user)
+    })
+   res.status(200).json({
+    status: "success",
+    message: "Usuário editado com sucesso",
+    data: user
+     })
 } catch (erro) {
-    res.status(500).json({error: "Erro ao editar usuário"})
+    res.status(500).json({
+        status: "error",
+        message: "Erros ao editar usuário"
+        })
     }
 })
 
@@ -81,12 +164,18 @@ try {
 
         })
 
-        res.status(200).json( {message: "Usuário deletado com Sucesso"})
+        res.status(200).json({
+            status: "success",
+            message: "Usuário deletado com sucesso"
+        })
     } catch (error){
-        res.status(500).json({ error: "Erro ao deletar usuário" })
+        res.status(500).json({
+            status: "error",
+            message: "Erro ao deletar usuário"
+        })
     }
-
-    })
+})
+    //
 
 
 const PORT = process.env.PORT || 3000
