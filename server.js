@@ -177,6 +177,19 @@ try {
 })
     //
 
+// ROTAS DE COMISSÕES //
+
+// ROTAS DE CADASTROS //
+
+// ROTAS DE PAGAMENTOS //
+
+// ROTAS DE SUBAFILIADO //
+
+// ROTAS DE COMISSÕES //
+
+
+
+// SERVIDOR //
 
 const PORT = process.env.PORT || 3000
 
@@ -184,17 +197,6 @@ app.listen(PORT, () => {
   console.log("Servidor rodando")
 })
 
-
+//
  
 
-
-/* 
-    Criar nossa API de Usuários
-
-    -Criar um usuário
-    -Listar todos os usuários
-    -Editar um usuário
-    -Deletar um usuário
-
-    
-*/
