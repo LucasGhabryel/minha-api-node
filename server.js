@@ -1,11 +1,13 @@
 import express from "express"
+import bodyParser from "body-parser" 
 import { PrismaClient } from "@prisma/client"
 
 const prisma = new PrismaClient()
 
 
 const app = express()
-app.use(express.json())
+app.use(bodyParser.json())
+app.use(bodyParser.urlencoded({ extended: true}))
 app.get('/favicon.ico', (req, res) => res.status(204))
 
 app.post('/usuarios', async (req, res) => {
