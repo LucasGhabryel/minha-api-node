@@ -10,8 +10,12 @@ app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: true}))
 app.get('/favicon.ico', (req, res) => res.status(204))
 
-app.post('/usuarios', async (req, res) => {
+app.get('/', (req, res) => {
+    res.status(200).json({message: "API funcionando!"})
+})
 
+app.post('/usuarios', async (req, res) => {
+try {
   const user = await prisma.user.create({
     data: {
         email: req.body.email,
@@ -19,13 +23,15 @@ app.post('/usuarios', async (req, res) => {
         age: Number(req.body.age)
     }
   }) 
-  
   res.status(201).json(user)
+} catch (error) {
+    res.status(500).json({ error: "Erro ao criar usuário"})
+}
 
 })
 
 app.get('/usuarios', async (req, res) => {
-
+try {
    let users = []
     if(req.query){
         users = await prisma.user.findMany({
@@ -34,21 +40,19 @@ app.get('/usuarios', async (req, res) => {
                 email: req.query.email,
                 age: req.query.age ? Number(req.query.age) : undefined
             }
-        
         })
-
-   } else {
+    } else {
     users = await prisma.user.findMany()
-
-   }
-
-  res.status(200).json(users)
-
+    }
+    res.status(200).json(users)
+ } catch (error) {
+    res.status(500).json({ error: "Erro ao listar usuários"})
+ }
 })
 
 
 app.put('/usuarios/:id', async (req, res) => {
-
+try{
   const user = await prisma.user.update({
     
     where: {
@@ -63,10 +67,13 @@ app.put('/usuarios/:id', async (req, res) => {
     
   })
    res.status(200).json(user)
+} catch (erro) {
+    res.status(500).json({error: "Erro ao editar usuário"})
+    }
 })
 
 app.delete('/usuarios/:id', async (req, res) => {
-
+try {
     await prisma.user.delete({
         where: {
             id: req.params.id
@@ -75,6 +82,9 @@ app.delete('/usuarios/:id', async (req, res) => {
         })
 
         res.status(200).json( {message: "Usuário deletado com Sucesso"})
+    } catch (error){
+        res.status(500).json({ error: "Erro ao deletar usuário" })
+    }
 
     })
 
@@ -97,6 +107,5 @@ app.listen(PORT, () => {
     -Editar um usuário
     -Deletar um usuário
 
-    Usuario:Lucas
-    Senha:AwVtmLj7uIQDTGuW
+    
 */
