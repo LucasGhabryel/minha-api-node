@@ -13,7 +13,10 @@ app.get('/favicon.ico', (req, res) => res.status(204))
 // ROTA PRINCIPAL //
 
 app.get('/', (req, res) => {
-    res.status(200).json({message: "API funcionando!"})
+    res.status(200).json({
+       status: "success",
+       message: "API funcionando"
+    })
 })
 
 //
