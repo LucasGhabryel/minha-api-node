@@ -70,19 +70,19 @@ app.post('/login', async (req, res) =>{
 // ROTAS DE USUARIOS //
 
 app.post('/usuarios', async (req, res) => {
-if (!req.body.email || !req.body.name || !req.body.age) {
+if (!req.body.nome || !req.body.email || !req.body.senha || !req.body.tipo) {
     return res.status(400).json({
         status: "error",
         message: "Campos obrigatórios não preenchidos"
     })
 }
-
     try {
   const user = await prisma.user.create({
     data: {
-        email: req.body.email,
         name: req.body.name,
-        age: Number(req.body.age)
+        email: req.body.email,
+        senha: req.body.senha,
+        tipo: req.body.tipo
     }
   })
   res.status(201).json({
@@ -107,7 +107,16 @@ try {
             where: {
                 name: req.query.name,
                 email: req.query.email,
-                age: req.query.age ? Number(req.query.age) : undefined
+                tipo: req.query.tipo
+            },
+            select: {
+                id:true,
+                nome: true,
+                email: true,
+                tipo: true,
+                status: true,
+                data_cadastro: true,
+                senha: false
             }
         })
     } else {
@@ -127,8 +136,8 @@ try {
 })
 
 
-app.put('/usuarios/:id', async (req, res) => {
-if (!req.body.email || !req.body.name || !req.body.age) {
+app.patch('/usuarios/:id', async (req, res) => {
+if (!req.body.nome || !req.body.email || !req.body.senha || !req.body.tipo) {
     return res.status(400).json({
         status: "error",
         message: "Campos obrigatórios não preenchidos"
@@ -136,14 +145,13 @@ if (!req.body.email || !req.body.name || !req.body.age) {
 }
      try{
   const user = await prisma.user.update({
-    where: {
-        id: req.params.id
-    },
+    where: { id: req.params.id },
     data: {
-        email: req.body.email,
         name: req.body.name,
-        age: Number(req.body.age)
-    }
+        email: req.body.email,
+        senha: req.body.senha,
+        tipo: req.body.tipo
+        }
     })
    res.status(200).json({
     status: "success",
