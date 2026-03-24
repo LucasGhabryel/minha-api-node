@@ -19,3 +19,16 @@ model User {
   age   Int
 }
 
+enum Status {
+  Ativo
+  Inativo
+}
+
+model SubAffiliates{
+  id String @id @default(cuid())
+  name  String
+  email String
+  status Status
+  registration_date DateTime
+}
+

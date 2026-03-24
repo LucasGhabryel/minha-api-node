@@ -195,7 +195,35 @@ try {
 // ROTAS DE PAGAMENTOS //
 
 // ROTAS DE SUBAFILIADO //
+app.get('/subafiliados', async (req, res) => {
+    try {
+        let sub_affiliates = []
+        const isValidStatus = req.query.status && Object.values(Status).includes(req.query.status)
 
+        if(req.query){
+            sub_affiliates = await prisma.user.findMany({
+                where: {
+                    name: req.query.name,
+                    email: req.query.email,
+                    status: isValidStatus ? req.query.status : undefined
+                }
+            })
+        } else {
+        sub_affiliates = await prisma.subAffiliates.findMany()
+        }
+
+        res.status(200).json({
+        status: "success",
+        message: "Sub-Afiliados listados com sucesso",
+        data: sub_affiliates
+        })
+    } catch {
+        res.status(500).json({
+            status: "error",
+            message: "Erro ao puxar os sub-afiliados"
+        })
+    }
+})
 // ROTAS DE COMISSÕES //
 
 
