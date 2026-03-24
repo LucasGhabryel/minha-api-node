@@ -201,9 +201,9 @@ app.get('/subafiliados', async (req, res) => {
         const isValidStatus = req.query.status && Object.values(Status).includes(req.query.status)
 
         if(req.query){
-            sub_affiliates = await prisma.user.findMany({
+            sub_affiliates = await prisma.subAffiliates.findMany({
                 where: {
-                    name: req.query.name,
+                    nome: req.query.nome,
                     email: req.query.email,
                     status: isValidStatus ? req.query.status : undefined
                 }
@@ -217,13 +217,42 @@ app.get('/subafiliados', async (req, res) => {
         message: "Sub-Afiliados listados com sucesso",
         data: sub_affiliates
         })
-    } catch {
+    } catch(error) {
         res.status(500).json({
             status: "error",
             message: "Erro ao puxar os sub-afiliados"
         })
     }
 })
+
+app.post('/subafiliados', async (req, res) => {
+    if (!req.body.nome || !req.body.email) {
+        return res.status(400).json({
+            status: "error",
+            message: "Campos obrigatórios não preenchidos"
+        })
+    }
+    try{
+        const subAffiliates = await prisma.subAffiliates.create({
+            data: {
+                nome: req.body.nome,
+                email: req.body.email,
+                status: "Ativo",
+                data_cadastro: new Date()
+            }
+        })
+        res.status(201).json({
+            status: "success",
+            message: "Sub-Afiliado criado com sucesso",
+            data: subAffiliates
+        }) 
+    } catch(error){
+        res.status(500).json({
+                status: "error",
+                message: "Erro ao criar usuário"
+            })
+        }
+    })
 // ROTAS DE COMISSÕES //
 
 

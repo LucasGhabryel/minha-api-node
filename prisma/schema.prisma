@@ -26,9 +26,9 @@ enum Status {
 
 model SubAffiliates{
   id String @id @default(cuid())
-  name  String
+  nome  String
   email String
   status Status
-  registration_date DateTime
+  data_cadastro DateTime
 }
 
