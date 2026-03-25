@@ -197,26 +197,28 @@ try {
 // ROTAS DE SUBAFILIADO //
 app.get('/subafiliados', async (req, res) => {
     try {
-        let sub_affiliates = []
-        const isValidStatus = req.query.status && Object.values(Status).includes(req.query.status)
+        let subAfiliados = []
 
         if(req.query){
-            sub_affiliates = await prisma.subAffiliates.findMany({
+            subAfiliados = await prisma.subafiliados.findMany({
                 where: {
-                    nome: req.query.nome,
-                    email: req.query.email,
-                    status: isValidStatus ? req.query.status : undefined
+                    afiliado_id: req.query.afiliado_id
                 }
             })
+
+            res.status(200).json({
+            status: "success",
+            message: "Sub-Afiliados listados com sucesso",
+            data: subAfiliados
+            })
         } else {
-        sub_affiliates = await prisma.subAffiliates.findMany()
+        subAfiliados = await prisma.subafiliados.findMany({
+            where: {
+                afiliado_id: req.body.afiliado_id
+            }
+        })
         }
 
-        res.status(200).json({
-        status: "success",
-        message: "Sub-Afiliados listados com sucesso",
-        data: sub_affiliates
-        })
     } catch(error) {
         res.status(500).json({
             status: "error",
@@ -226,25 +228,24 @@ app.get('/subafiliados', async (req, res) => {
 })
 
 app.post('/subafiliados', async (req, res) => {
-    if (!req.body.nome || !req.body.email) {
+    if (!req.body.afiliado_id || !req.body.nome || !req.body.email) {
         return res.status(400).json({
             status: "error",
             message: "Campos obrigatórios não preenchidos"
         })
     }
     try{
-        const subAffiliates = await prisma.subAffiliates.create({
+        const subAfiliados = await prisma.subafiliados.create({
             data: {
+                afiliado_id: req.body.afiliado_id,
                 nome: req.body.nome,
                 email: req.body.email,
-                status: "Ativo",
-                data_cadastro: new Date()
             }
         })
         res.status(201).json({
             status: "success",
             message: "Sub-Afiliado criado com sucesso",
-            data: subAffiliates
+            data: subAfiliados
         }) 
     } catch(error){
         res.status(500).json({
@@ -255,34 +256,37 @@ app.post('/subafiliados', async (req, res) => {
     })
 
 app.patch('/subafiliados/:id', async (req, res) => {
-    if (!req.body.nome || !req.body.email || !req.body.status) {
+    
+    const {nome, email, status} = req.body;
+
+    if (nome === undefined && email === undefined && status === undefined) {
         return res.status(400).json({
-            status: "error",
-            message: "Campos obrigatórios não preenchidos"
-        })
+        status: "error",
+        message: "Nenhum campo válido para atualização foi fornecido. Os campos permitidos são: nome, email, status."
+        });
     }
 
-    const isValidStatus = Object.values(Status).includes(req.body.status)
-    if (!isValidStatus) {
-        return res.status(400).json({
-            status: "error",
-            message: "Status inválido"
-        })
-    }
+    // const isValidStatus = Object.values(Status).includes(req.body.status)
+    // if (!isValidStatus) {
+    //     return res.status(400).json({
+    //         status: "error",
+    //         message: "Status inválido"
+    //     })
+    // }
     
     try{
-        const subAffiliates = await prisma.subAffiliates.update({
-            where: { id: req.params.id },
+        const subAfiliados = await prisma.subafiliados.update({
+            where: { id: parseInt(req.params.id) },
             data: {
-                nome: req.body.nome,
-                email: req.body.email,
-                status: req.body.status
+                nome: nome !== undefined ? nome : undefined,
+                email: email !== undefined ? email : undefined,
+                status: status !== undefined ? status : undefined
             }
         })
         res.status(200).json({
             status: "success",
             message: "Sub-Afiliado editado com sucesso",
-            data: subAffiliates
+            data: subAfiliados
         })
     } catch(erro) {
         res.status(500).json({

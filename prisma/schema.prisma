@@ -1,34 +1,105 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "mysql"
-    url      = env("DATABASE_URL")
+  url      = env("DATABASE_URL")
 }
 
 model User {
-  id String @id @default(cuid())
-  name  String
+  id    String @id
   email String
+  name  String
   age   Int
 }
 
-enum Status {
-  Ativo
-  Inativo
+model comissoes {
+  id         Int      @id @default(autoincrement())
+  usuario_id Int
+  valor      Decimal  @db.Decimal(10, 2)
+  data       DateTime @db.Date
+  sacado     Boolean? @default(false)
+  usuarios   usuarios @relation(fields: [usuario_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "comissoes_ibfk_1")
+
+  @@index([usuario_id], map: "usuario_id")
 }
 
-model SubAffiliates{
-  id String @id @default(cuid())
-  nome  String
-  email String
-  status Status
-  data_cadastro DateTime
+model comissoes_subafiliados {
+  id             Int          @id @default(autoincrement())
+  subafiliado_id Int
+  valor          Decimal?     @db.Decimal(10, 2)
+  data           DateTime?    @db.Date
+  subafiliados   subafiliados @relation(fields: [subafiliado_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "comissoes_subafiliados_ibfk_1")
+
+  @@index([subafiliado_id], map: "subafiliado_id")
 }
 
+model links_afiliado {
+  id          Int      @id @default(autoincrement())
+  afiliado_id Int
+  link        String   @db.VarChar(500)
+  usuarios    usuarios @relation(fields: [afiliado_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "links_afiliado_ibfk_1")
+
+  @@index([afiliado_id], map: "afiliado_id")
+}
+
+model pagamentos {
+  id             Int                @id @default(autoincrement())
+  usuario_id     Int
+  valor          Decimal            @db.Decimal(10, 2)
+  status         pagamentos_status? @default(pendente)
+  data_pagamento DateTime?          @db.Date
+  usuarios       usuarios           @relation(fields: [usuario_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "pagamentos_ibfk_1")
+
+  @@index([usuario_id], map: "usuario_id")
+}
+
+model subafiliados {
+  id                     Int                      @id @default(autoincrement())
+  afiliado_id            Int
+  nome                   String?                  @db.VarChar(255)
+  email                  String?                  @db.VarChar(255)
+  status                 subafiliados_status?     @default(ativo)
+  data_cadastro          DateTime?                @default(now()) @db.Timestamp(0)
+  comissoes_subafiliados comissoes_subafiliados[]
+  usuarios               usuarios                 @relation(fields: [afiliado_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "subafiliados_ibfk_1")
+
+  @@index([afiliado_id], map: "afiliado_id")
+}
+
+model usuarios {
+  id             Int                    @id @default(autoincrement())
+  nome           String                 @db.VarChar(255)
+  email          String                 @unique(map: "email") @db.VarChar(255)
+  senha          String                 @db.Text
+  tipo_usuario   usuarios_tipo_usuario? @default(user)
+  status         usuarios_status?       @default(pendente)
+  data_cadastro  DateTime?              @default(now()) @db.Timestamp(0)
+  comissoes      comissoes[]
+  links_afiliado links_afiliado[]
+  pagamentos     pagamentos[]
+  subafiliados   subafiliados[]
+}
+
+enum pagamentos_status {
+  pendente
+  pago
+  rejeitado
+}
+
+enum usuarios_tipo_usuario {
+  admin
+  user
+}
+
+enum subafiliados_status {
+  ativo
+  desativado
+}
+
+enum usuarios_status {
+  ativo
+  pendente
+  desativado
+}
