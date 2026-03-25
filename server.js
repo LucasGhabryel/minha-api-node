@@ -249,10 +249,48 @@ app.post('/subafiliados', async (req, res) => {
     } catch(error){
         res.status(500).json({
                 status: "error",
-                message: "Erro ao criar usuário"
+                message: "Erro ao criar Sub-Afiliado"
             })
         }
     })
+
+app.patch('/subafiliados/:id', async (req, res) => {
+    if (!req.body.nome || !req.body.email || !req.body.status) {
+        return res.status(400).json({
+            status: "error",
+            message: "Campos obrigatórios não preenchidos"
+        })
+    }
+
+    const isValidStatus = Object.values(Status).includes(req.body.status)
+    if (!isValidStatus) {
+        return res.status(400).json({
+            status: "error",
+            message: "Status inválido"
+        })
+    }
+    
+    try{
+        const subAffiliates = await prisma.subAffiliates.update({
+            where: { id: req.params.id },
+            data: {
+                nome: req.body.nome,
+                email: req.body.email,
+                status: req.body.status
+            }
+        })
+        res.status(200).json({
+            status: "success",
+            message: "Sub-Afiliado editado com sucesso",
+            data: subAffiliates
+        })
+    } catch(erro) {
+        res.status(500).json({
+            status: "error",
+            message: "Erros ao editar Sub-Afiliados"
+        })
+    }
+})
 // ROTAS DE COMISSÕES //
 
 
