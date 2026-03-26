@@ -234,7 +234,36 @@ app.get('/comissoes-subafiliado/:id', async (req, res) => {
 
 // ROTAS DE SUBAFILIADO //
 
-// ROTAS DE COMISSÕES //
+// ROTAS DE Links //
+
+app.get('/links-afiliado/:id', async (req, res) => {
+
+    try{
+        const linksAfiliadoId = parseInt(req.params.id);
+
+        const linksAfiliado = await prisma.links_afiliado.findMany({
+            where: {
+                afiliado_id: linksAfiliadoId
+            },
+            select: {
+                id: true,
+                link: true
+            }
+        })
+        res.status(200).json({
+            status: "success",
+            message: "Links do Afiliado listados com sucesso",
+            data: linksAfiliado
+        })
+    } catch(error) {
+        console.log(error)
+        res.status(500).json({
+            status: "error",
+            message: "Error ao listar links do Afiliado"
+        })
+    }
+
+})
 
 
 
