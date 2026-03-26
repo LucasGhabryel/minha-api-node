@@ -189,7 +189,45 @@ try {
     //
 
 // ROTAS DE COMISSÕES //
+app.get('/comissoes-subafiliado/:id', async (req, res) => {
+    try{
+        const subafiliadoId = parseInt(req.params.id);
 
+        const totalComissoes = await prisma.comissoes_subafiliados.aggregate({
+            _sum: {
+                valor: true
+            },
+            where: {
+                subafiliado_id: subafiliadoId
+            }
+        });
+
+        const comissoesSubafiliados = await prisma.comissoes_subafiliados.findMany({
+            where: {
+                subafiliado_id: subafiliadoId
+            },
+            select: {
+                id: true,
+                valor: true,
+                data: true
+            }
+        })
+        res.status(200).json({
+            status: "success",
+            message: "comissões dos Sub-Afiliados listados com sucesso",
+            data:  {
+                Comissoes: totalComissoes._sum.valor || 0,
+                data: comissoesSubafiliados
+            }
+        })
+    } catch(error) {
+        console.log(error)
+        res.status(500).json({
+            status: "error",
+            message: "Error ao listar comissões dos Sub-Afiliados"
+        })
+    }
+})
 // ROTAS DE CADASTROS //
 
 // ROTAS DE PAGAMENTOS //
