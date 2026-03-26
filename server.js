@@ -221,7 +221,6 @@ app.get('/comissoes-subafiliado/:id', async (req, res) => {
             }
         })
     } catch(error) {
-        console.log(error)
         res.status(500).json({
             status: "error",
             message: "Error ao listar comissões dos Sub-Afiliados"
@@ -231,6 +230,54 @@ app.get('/comissoes-subafiliado/:id', async (req, res) => {
 // ROTAS DE CADASTROS //
 
 // ROTAS DE PAGAMENTOS //
+
+app.patch('/pagamentos/:id', async (req, res) => {
+    try{
+        const pagamentosId = parseInt(req.params.id);
+        const status = req.body.status;
+        const StatusValues = ['pendente', 'pago', 'rejeitado'];
+
+        if (status === undefined){
+            return res.status(400).json({
+                status: "error",
+                message: "Campo de Status não foi definido"
+            });
+        }
+
+        if (!StatusValues.includes(status)) {
+            return res.status(400).json({
+                status: "error",
+                message: "Status inválido"
+            });
+        }
+        
+        const pagamentos = await prisma.pagamentos.update({
+            where:{
+                id: pagamentosId
+            },
+            data: {
+                status: status
+            },
+            select: {
+                id: true,
+                valor: true,
+                status: true,
+                data_pagamento: true
+            }
+        })
+        res.status(200).json({
+            status: "success",
+            message: "Status de pagamento editado com sucesso",
+            data: pagamentos
+        })
+    } catch(error) {
+        console.error(error)
+        res.status(500).json({
+            status: "error",
+            message: "Error ao atualizar status de pagamento"
+        })
+    }
+})
 
 // ROTAS DE SUBAFILIADO //
 
@@ -256,7 +303,6 @@ app.get('/links-afiliado/:id', async (req, res) => {
             data: linksAfiliado
         })
     } catch(error) {
-        console.log(error)
         res.status(500).json({
             status: "error",
             message: "Error ao listar links do Afiliado"
