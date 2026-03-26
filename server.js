@@ -19,8 +19,6 @@ app.get('/', (req, res) => {
     })
 })
 
-//
-
 // ROTAS DE AUTENTICAÇÃO //
 
 app.post('/login', async (req, res) =>{
@@ -32,7 +30,7 @@ app.post('/login', async (req, res) =>{
         })
     }
     try {
-        const user = await prisma.user.findUnique({
+        const user = await prisma.usuarios.findUnique({
             where: { email: req.body.email}
         })
 
@@ -56,7 +54,7 @@ app.post('/login', async (req, res) =>{
                 id: user.id,
                 nome: user.nome,
                 email: user.email,
-                tipo: user.tipo
+                tipo: user.tipo_usuario
             }
         })
     } catch (error) {
@@ -70,19 +68,19 @@ app.post('/login', async (req, res) =>{
 // ROTAS DE USUARIOS //
 
 app.post('/usuarios', async (req, res) => {
-if (!req.body.nome || !req.body.email || !req.body.senha || !req.body.tipo) {
+if (!req.body.nome || !req.body.email || !req.body.senha || !req.body.tipo_usuario) {
     return res.status(400).json({
         status: "error",
         message: "Campos obrigatórios não preenchidos"
     })
 }
     try {
-  const user = await prisma.user.create({
+  const user = await prisma.usuarios.create({
     data: {
-        name: req.body.name,
+        nome: req.body.nome,
         email: req.body.email,
         senha: req.body.senha,
-        tipo: req.body.tipo
+        tipo_usuario: req.body.tipo_usuario
     }
   })
   res.status(201).json({
@@ -101,33 +99,40 @@ if (!req.body.nome || !req.body.email || !req.body.senha || !req.body.tipo) {
 
 app.get('/usuarios', async (req, res) => {
 try {
-   let users = []
-    if(req.query){
-        users = await prisma.user.findMany({
-            where: {
-                name: req.query.name,
-                email: req.query.email,
-                tipo: req.query.tipo
-            },
+    
+    const filters = {}
+
+    if (req.query.nome) {
+        filters.nome = req.query.nome
+    }
+
+    if (req.query.email) {
+        filters.email = req.query.email
+    }
+
+    if (req.query.tipo_usuario){
+        filters.tipo_usuario = req.query.tipo_usuario
+    }
+
+       const users = await prisma.usuarios.findMany({
+            where: filters,
             select: {
                 id:true,
                 nome: true,
                 email: true,
-                tipo: true,
+                tipo_usuario: true,
                 status: true,
                 data_cadastro: true,
-                senha: false
             }
         })
-    } else {
-    users = await prisma.user.findMany()
-    }
-    res.status(200).json({
-        status: "success",
-        message: "Usuários listados com sucesso",
-        data: users
-})
- } catch (error) {
+        res.status(200).json({
+            status: "success",
+            message: "Usuários listados com sucesso",
+            data: users
+        })
+
+    } catch (error) {
+        console.log(error)
     res.status(500).json({
         status: "error",
         message: "Error ao listar usuários"
@@ -135,22 +140,21 @@ try {
  }
 })
 
-
 app.patch('/usuarios/:id', async (req, res) => {
-if (!req.body.nome || !req.body.email || !req.body.senha || !req.body.tipo) {
+if (!req.body.nome || !req.body.email || !req.body.senha || !req.body.tipo_usuario) {
     return res.status(400).json({
         status: "error",
         message: "Campos obrigatórios não preenchidos"
     })
 }
      try{
-  const user = await prisma.user.update({
-    where: { id: req.params.id },
+  const user = await prisma.usuarios.update({
+    where: { id: Number(req.params.id) },
     data: {
-        name: req.body.name,
+        nome: req.body.nome,
         email: req.body.email,
         senha: req.body.senha,
-        tipo: req.body.tipo
+        tipo_usuario: req.body.tipo_usuario
         }
     })
    res.status(200).json({
@@ -168,9 +172,9 @@ if (!req.body.nome || !req.body.email || !req.body.senha || !req.body.tipo) {
 
 app.delete('/usuarios/:id', async (req, res) => {
 try {
-    await prisma.user.delete({
+    await prisma.usuarios.delete({
         where: {
-            id: req.params.id
+            id: Number(req.params.id)
         }
 
         })
@@ -186,7 +190,6 @@ try {
         })
     }
 })
-    //
 
 // ROTAS DE COMISSÕES //
 app.get('/comissoes-subafiliado/:id', async (req, res) => {
@@ -228,6 +231,86 @@ app.get('/comissoes-subafiliado/:id', async (req, res) => {
     }
 })
 // ROTAS DE CADASTROS //
+
+app.get('/cadastros-a-aprovar', async (req, res) => {
+    try {
+        const cadastro = await prisma.usuarios.findMany({
+            where: {
+                status: "pendente"
+            },
+            select: {
+                id: true,
+                nome: true,
+                email:true,
+                status: true
+            }
+        })
+        res.status(200).json({
+            status: "success",
+            message: "Cadastros pendentes listados com sucesso",
+            data: cadastro
+        })
+    } catch (error) {
+        res.status(500).json({
+            status: "error",
+            message: "Erro ao listar cadastros pendentes"
+        })
+    }
+})
+
+app.patch('/cadastros-a-aprovar/:id', async (req, res) => {
+    const { status } = req.body
+
+    if(!status) {
+        return res.status(400).json({
+            status: "error",
+            message: "Status é obrigatorio"
+        })
+    }
+
+    let novoStatus
+
+    if (status === "aprovado") {
+        novoStatus = "ativo"
+    } else if (status === "rejeitado") {
+        novoStatus = "desativado"
+    } else if (["ativo", "pendente", "desativado"].includes(status)) {
+        novoStatus = status
+    } else {
+        return res.status(400).json({
+            status: "error",
+            message: "Status inválido"
+        })
+    }
+
+    try {
+        const usuario = await prisma.usuarios.update({
+            where: {
+                id: Number(req.params.id)
+            },
+            data: {
+                status: novoStatus
+            }
+        })
+    
+    res.status(200).json({
+        status: "success",
+        data: {
+            id: usuario.id,
+            nome: usuario.nome,
+            email: usuario.email,
+            status: status,
+            data_cadastro: usuario.data_cadastro
+        }
+    })
+    
+    } catch (error) {
+        res.status(500).json({
+            status: "error",
+            message: "Erro ao atualizar cadastro"
+        })
+    }
+})
 
 // ROTAS DE PAGAMENTOS //
 
@@ -280,6 +363,16 @@ app.patch('/pagamentos/:id', async (req, res) => {
 })
 
 // ROTAS DE SUBAFILIADO //
+app.get('/subafiliados', async (req, res) => {
+    try {
+        let subAfiliados = []
+
+        if(req.query){
+            subAfiliados = await prisma.subafiliados.findMany({
+                where: {
+                    afiliado_id: req.query.afiliado_id
+                }
+            })
 
 // ROTAS DE Links //
 
@@ -320,7 +413,3 @@ const PORT = process.env.PORT || 3000
 app.listen(PORT, () => {
   console.log("Servidor rodando")
 })
-
-//
- 
-
