@@ -231,6 +231,45 @@ app.get('/comissoes', async (req, res) =>{
     }
 })
 
+app.get('/comissoes-subafiliado/:id', async (req, res) => {
+    try{
+        const subafiliadoId = parseInt(req.params.id);
+
+        const totalComissoes = await prisma.comissoes_subafiliados.aggregate({
+            _sum: {
+                valor: true
+            },
+            where: {
+                subafiliado_id: subafiliadoId
+            }
+        });
+
+        const comissoesSubafiliados = await prisma.comissoes_subafiliados.findMany({
+            where: {
+                subafiliado_id: subafiliadoId
+            },
+            select: {
+                id: true,
+                valor: true,
+                data: true
+            }
+        })
+        res.status(200).json({
+            status: "success",
+            message: "comissões dos Sub-Afiliados listados com sucesso",
+            data:  {
+                Comissoes: totalComissoes._sum.valor || 0,
+                data: comissoesSubafiliados
+            }
+        })
+    } catch(error) {
+        res.status(500).json({
+            status: "error",
+            message: "Error ao listar comissões dos Sub-Afiliados"
+        })
+    }
+})
+
 // ROTAS DE CADASTROS //
 
 app.get('/cadastros-a-aprovar', async (req, res) => {
@@ -396,11 +435,131 @@ app.get('/pagamentos-a-aprovar', async (req, res) => {
         }
      })
 
-    
-        
-    
 
 
+// Rotas Sub-Afiliados // 
+
+app.get('/subafiliados', async (req, res) => {
+    try {
+        let subAfiliados = []
+
+        if(req.query){
+            subAfiliados = await prisma.subafiliados.findMany({
+                where: {
+                    afiliado_id: req.query.afiliado_id
+                }
+            })
+
+            res.status(200).json({
+            status: "success",
+            message: "Sub-Afiliados listados com sucesso",
+            data: subAfiliados
+            })
+        } else {
+        subAfiliados = await prisma.subafiliados.findMany({
+            where: {
+                afiliado_id: req.body.afiliado_id
+            }
+        })
+        }
+
+    } catch(error) {
+        res.status(500).json({
+            status: "error",
+            message: "Erro ao puxar os sub-afiliados"
+        })
+    }
+})
+
+app.post('/subafiliados', async (req, res) => {
+    if (!req.body.afiliado_id || !req.body.nome || !req.body.email) {
+        return res.status(400).json({
+            status: "error",
+            message: "Campos obrigatórios não preenchidos"
+        })
+    }
+    try{
+        const subAfiliados = await prisma.subafiliados.create({
+            data: {
+                afiliado_id: req.body.afiliado_id,
+                nome: req.body.nome,
+                email: req.body.email,
+            }
+        })
+        res.status(201).json({
+            status: "success",
+            message: "Sub-Afiliado criado com sucesso",
+            data: subAfiliados
+        }) 
+    } catch(error){
+        res.status(500).json({
+                status: "error",
+                message: "Erro ao criar Sub-Afiliado"
+            })
+        }
+    })
+
+app.patch('/subafiliados/:id', async (req, res) => {
+    
+    const {nome, email, status} = req.body;
+
+    if (nome === undefined && email === undefined && status === undefined) {
+        return res.status(400).json({
+        status: "error",
+        message: "Nenhum campo válido para atualização foi fornecido. Os campos permitidos são: nome, email, status."
+        });
+    }
+    
+    try{
+        const subAfiliados = await prisma.subafiliados.update({
+            where: { id: parseInt(req.params.id) },
+            data: {
+                nome: nome !== undefined ? nome : undefined,
+                email: email !== undefined ? email : undefined,
+                status: status !== undefined ? status : undefined
+            }
+        })
+        res.status(200).json({
+            status: "success",
+            message: "Sub-Afiliado editado com sucesso",
+            data: subAfiliados
+        })
+    } catch(erro) {
+        res.status(500).json({
+            status: "error",
+            message: "Erros ao editar Sub-Afiliados"
+        })
+    }
+})
+
+// ROTAS DE Links //
+app.get('/links-afiliado/:id', async (req, res) => {
+
+    try{
+        const linksAfiliadoId = parseInt(req.params.id);
+
+        const linksAfiliado = await prisma.links_afiliado.findMany({
+            where: {
+                afiliado_id: linksAfiliadoId
+            },
+            select: {
+                id: true,
+                link: true
+            }
+        })
+        res.status(200).json({
+            status: "success",
+            message: "Links do Afiliado listados com sucesso",
+            data: linksAfiliado
+        })
+    } catch(error) {
+        res.status(500).json({
+            status: "error",
+            message: "Error ao listar links do Afiliado"
+        })
+    }
+
+})
 
 
 // SERVIDOR //
