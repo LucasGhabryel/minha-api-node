@@ -1,6 +1,7 @@
 import express from "express"
 import bodyParser from "body-parser" 
 import { PrismaClient } from "@prisma/client"
+import pool from './db.js'
 
 const prisma = new PrismaClient()
 
@@ -441,28 +442,23 @@ app.get('/pagamentos-a-aprovar', async (req, res) => {
 
 app.get('/subafiliados', async (req, res) => {
     try {
-        let subAfiliados = []
+        const { afiliado_id } = req.query;
 
-        if(req.query){
-            subAfiliados = await prisma.subafiliados.findMany({
-                where: {
-                    afiliado_id: req.query.afiliado_id
-                }
-            })
+        let query = 'SELECT * FROM subafiliados';
+        let values = [];
 
-            res.status(200).json({
+        if (afiliado_id) {
+            query += ' WHERE afiliado_id = ?';
+            values.push(parseInt(afiliado_id));
+        }
+
+        const [subAfiliados] = await pool.execute(query, values);
+
+        res.status(200).json({
             status: "success",
             message: "Sub-Afiliados listados com sucesso",
             data: subAfiliados
-            })
-        } else {
-        subAfiliados = await prisma.subafiliados.findMany({
-            where: {
-                afiliado_id: req.body.afiliado_id
-            }
-        })
-        }
-
+        });
     } catch(error) {
         res.status(500).json({
             status: "error",
@@ -472,24 +468,24 @@ app.get('/subafiliados', async (req, res) => {
 })
 
 app.post('/subafiliados', async (req, res) => {
-    if (!req.body.afiliado_id || !req.body.nome || !req.body.email) {
+
+    const {afiliado_id, nome, email} = req.body
+
+    if (!afiliado_id || !nome || !email) {
         return res.status(400).json({
             status: "error",
             message: "Campos obrigatórios não preenchidos"
         })
     }
     try{
-        const subAfiliados = await prisma.subafiliados.create({
-            data: {
-                afiliado_id: req.body.afiliado_id,
-                nome: req.body.nome,
-                email: req.body.email,
-            }
-        })
+        const [resultado] = await pool.execute(
+            'INSERT INTO subafiliados (afiliado_id, nome, email) VALUES (?, ?, ?)',
+            [afiliado_id, nome, email]
+        );
         res.status(201).json({
             status: "success",
             message: "Sub-Afiliado criado com sucesso",
-            data: subAfiliados
+            data: {id: resultado.insertId, afiliado_id, nome, email}
         }) 
     } catch(error){
         res.status(500).json({
@@ -510,15 +506,29 @@ app.patch('/subafiliados/:id', async (req, res) => {
         });
     }
     
+    const updates = [];
+    const valores = [];
+
+    if (nome !== undefined) {
+        updates.push('nome = ?');
+        values.push(nome);
+    }
+    if (email !== undefined) {
+        updates.push('email = ?');
+        values.push(email);
+    }
+    if (status !== undefined) {
+        updates.push('status = ?');
+        values.push(status);
+    }
+
+    valores.push(parseInt(req.params.id));
+
     try{
-        const subAfiliados = await prisma.subafiliados.update({
-            where: { id: parseInt(req.params.id) },
-            data: {
-                nome: nome !== undefined ? nome : undefined,
-                email: email !== undefined ? email : undefined,
-                status: status !== undefined ? status : undefined
-            }
-        })
+        await pool.execute(
+            'UPDATE subafiliados SET ${updates.join(', ')} WHERE id = ?', valores
+        ); 
+
         res.status(200).json({
             status: "success",
             message: "Sub-Afiliado editado com sucesso",
