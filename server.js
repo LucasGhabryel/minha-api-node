@@ -233,33 +233,24 @@ app.get('/comissoes', async (req, res) =>{
 })
 
 app.get('/comissoes-subafiliado/:id', async (req, res) => {
-    try{
-        const subafiliadoId = parseInt(req.params.id);
+    const subafiliadoId = parseInt(req.params.id);  
 
-        const totalComissoes = await prisma.comissoes_subafiliados.aggregate({
-            _sum: {
-                valor: true
-            },
-            where: {
-                subafiliado_id: subafiliadoId
-            }
-        });
+    try{      
 
-        const comissoesSubafiliados = await prisma.comissoes_subafiliados.findMany({
-            where: {
-                subafiliado_id: subafiliadoId
-            },
-            select: {
-                id: true,
-                valor: true,
-                data: true
-            }
-        })
+        const [result] = await pool.execute(
+            'SELECT SUM(valor) as total FROM comissoes_subafiliados WHERE subafiliado_id = ?', [subafiliadoId]
+        );
+        const totalComissoes = result[0].total;
+
+        const [comissoesSubafiliados] = await pool.execute(
+            'SELECT id, valor, data FROM comissoes_subafiliados WHERE subafiliado_id = ?', [subafiliadoId]
+        );
+
         res.status(200).json({
             status: "success",
             message: "comissões dos Sub-Afiliados listados com sucesso",
             data:  {
-                Comissoes: totalComissoes._sum.valor || 0,
+                Comissoes: result[0].total || 0,
                 data: comissoesSubafiliados
             }
         })
@@ -545,30 +536,25 @@ app.patch('/subafiliados/:id', async (req, res) => {
 // ROTAS DE Links //
 app.get('/links-afiliado/:id', async (req, res) => {
 
-    try{
-        const linksAfiliadoId = parseInt(req.params.id);
+    const linksAfiliadoId = parseInt(req.params.id);
 
-        const linksAfiliado = await prisma.links_afiliado.findMany({
-            where: {
-                afiliado_id: linksAfiliadoId
-            },
-            select: {
-                id: true,
-                link: true
-            }
-        })
+    try{
+        
+        const [linksAfiliado] = await pool.execute(
+            'SELECT id, link FROM links_afiliado WHERE afiliado_id = ?', [linksAfiliadoId]
+        );
+
         res.status(200).json({
             status: "success",
             message: "Links do Afiliado listados com sucesso",
             data: linksAfiliado
-        })
+        });
     } catch(error) {
         res.status(500).json({
             status: "error",
             message: "Error ao listar links do Afiliado"
         })
     }
-
 })
 
 
