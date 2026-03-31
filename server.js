@@ -540,7 +540,7 @@ app.patch('/subafiliados/:id', async (req, res) => {
     valores.push(parseInt(req.params.id));
 
     try{
-        const [subAfiliados] = await pool.execute(
+        await pool.execute(
             `UPDATE subafiliados SET ${updates.join(', ')} WHERE id = ?`, valores
         ); 
 
