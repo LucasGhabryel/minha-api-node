@@ -5,6 +5,7 @@ import pool from './db.js'
 
 const prisma = new PrismaClient()
 
+
 const app = express()
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: true}))
@@ -31,9 +32,12 @@ app.post('/login', async (req, res) =>{
         })
     }
     try {
-        const user = await prisma.usuarios.findUnique({
-            where: { email: req.body.email}
-        })
+        const [rows] = await pool.query(
+            'SELECT * FROM usuarios WHERE email = ?',
+            [req.body.email]
+        )
+
+        const user = rows[0]
 
         if (!user) {
             return res.status(404).json({
@@ -59,6 +63,7 @@ app.post('/login', async (req, res) =>{
             }
         })
     } catch (error) {
+        console.log(error)
         res.status(500).json({
             status: "error",
             message: "Erro ao realizar login"
@@ -76,18 +81,20 @@ if (!req.body.nome || !req.body.email || !req.body.senha || !req.body.tipo_usuar
     })
 }
     try {
-  const user = await prisma.usuarios.create({
-    data: {
-        nome: req.body.nome,
-        email: req.body.email,
-        senha: req.body.senha,
-        tipo_usuario: req.body.tipo_usuario
-    }
-  })
+  const [result] = await pool.query (
+    'INSERT INTO usuarios (nome, email, senha, tipo_usuario) VALUES (?, ?, ?, ?)',
+[req.body.nome, req.body.email, req.body.senha, req.body.tipo_usuario]
+  )
+  
   res.status(201).json({
     status: "success",
     message: "Usuário criado com sucesso",
-    data: user
+    data: {
+        id: result.insertId,
+        nome: req.body.nome,
+        email: req.body.email,
+        tipo_usuario: req.body.tipo_usuario
+    }
   }) 
 } catch (error) {
     res.status(500).json({
@@ -95,41 +102,35 @@ if (!req.body.nome || !req.body.email || !req.body.senha || !req.body.tipo_usuar
         message: "Erro ao criar usuário"
     })
 }
-
 })
 
 app.get('/usuarios', async (req, res) => {
 try {
     
-    const filters = {}
+    let query = 'SELECT id, nome, email, tipo_usuario, status, data_cadastro FROM usuarios WHERE 1=1'
+    const params = []
 
     if (req.query.nome) {
-        filters.nome = req.query.nome
+        query += ' AND nome = ?'
+        params.push(req.query.nome)
     }
 
     if (req.query.email) {
-        filters.email = req.query.email
+        query += ' AND email = ?'
+        params.push(req.query.email)
     }
 
     if (req.query.tipo_usuario){
-        filters.tipo_usuario = req.query.tipo_usuario
+        query += ' AND tipo_usuario = ?'
+        params.push(req.query.tipo_usuario)
     }
 
-       const users = await prisma.usuarios.findMany({
-            where: filters,
-            select: {
-                id:true,
-                nome: true,
-                email: true,
-                tipo_usuario: true,
-                status: true,
-                data_cadastro: true,
-            }
-        })
+      const [rows] = await pool.query(query, params)
+        
         res.status(200).json({
             status: "success",
             message: "Usuários listados com sucesso",
-            data: users
+            data: rows
         })
 
     } catch (error) {
@@ -149,21 +150,30 @@ if (!req.body.nome || !req.body.email || !req.body.senha || !req.body.tipo_usuar
     })
 }
      try{
-  const user = await prisma.usuarios.update({
-    where: { id: Number(req.params.id) },
-    data: {
-        nome: req.body.nome,
-        email: req.body.email,
-        senha: req.body.senha,
-        tipo_usuario: req.body.tipo_usuario
+        const [result] = await pool.query(
+            'UPDATE usuarios SET nome = ?, email = ?, senha = ?, tipo_usuario = ? WHERE id = ?',
+            [req.body.nome, req.body.email, req.body.senha, req.body.tipo_usuario, req.params.id]
+        )
+     
+        if (result.affectedRows === 0) {
+            return res.status(404).json({
+                status: "error",
+                message: "Usuário não encontrado"
+            })
         }
-    })
+        
    res.status(200).json({
     status: "success",
     message: "Usuário editado com sucesso",
-    data: user
+    data: {
+        id: req.params.id,
+        nome: req.body.nome,
+        email: req.body.email,
+        tipo_usuario: req.body.tipo_usuario
+    }
      })
-} catch (erro) {
+} catch (error) {
+    console.log(error)
     res.status(500).json({
         status: "error",
         message: "Erros ao editar usuário"
@@ -173,13 +183,17 @@ if (!req.body.nome || !req.body.email || !req.body.senha || !req.body.tipo_usuar
 
 app.delete('/usuarios/:id', async (req, res) => {
 try {
-    await prisma.usuarios.delete({
-        where: {
-            id: Number(req.params.id)
-        }
+   const [result] = await pool.query(
+    'DELETE FROM usuarios WHERE id = ?',
+    [req.params.id]
+   )
 
-        })
-
+   if (result.affectedRows === 0) {
+    return res.status(404).json({
+        status: "error",
+        message: "Usuário não encontrado"
+    })
+   }
         res.status(200).json({
             status: "success",
             message: "Usuário deletado com sucesso"
@@ -196,31 +210,38 @@ try {
 
 app.get('/comissoes', async (req, res) =>{
     try {
-        
-        const userId = req.query.usuario ? Number(req.query.usuario) : undefined
-        const comissao = await prisma.comissoes.findMany({
-            where: {
-                usuario_id: req.query.user ? Number(req.query.user) : undefined,
-                data: {
-                    gte: req.query.data_inicio ? new Date (req.query.data_inicio) : undefined,
-                    lte: req.query.data_fim ? new Date (req.query.data_fim) : undefined
-                }
-            }
-        })
+    
+    let query = 'SELECT * FROM comissoes WHERE 1=1'
+    const params = []
 
-        if(userId) {
-            await gerarPagamento(userId)
-        }
+    if (req.query.usuario) {
+        query += ' AND usuario_id = ?'
+        params.push(Number(req.query.usuario))
+    }
+      if (req.query.data_inicio) {
+        query += ' AND data >= ?'
+        params.push(new Date(req.query.data_inicio))
+    }
+      if (req.query.data_fim) {
+        query += ' AND data <= ?'
+        params.push(new Date(req.query.data_fim))
+      }
+
+      const [rows] = await pool.query(query, params)
+
+      if (req.query.usuario) {
+        await gerarPagamento(Number(req.query.usuario))
+      }
 
 
-        const total_comissoes = comissao.reduce((acc, c) => acc + Number(c.valor), 0)
+        const total_comissoes = rows.reduce((acc, c) => acc + Number(c.valor), 0)
 
         res.status(200).json({
             status: "success",
             message: "Comissões listadas com sucesso",
             data: {
                 total_comissoes,
-                ultimas_comissoes: comissao
+                ultimas_comissoes: rows
             }
         })
     } catch (error) {
@@ -266,23 +287,19 @@ app.get('/comissoes-subafiliado/:id', async (req, res) => {
 
 app.get('/cadastros-a-aprovar', async (req, res) => {
     try {
-        const cadastro = await prisma.usuarios.findMany({
-            where: {
-                status: "pendente"
-            },
-            select: {
-                id: true,
-                nome: true,
-                email:true,
-                status: true
-            }
-        })
+        const [rows] = await pool.query(
+            'SELECT id, nome, email, status FROM usuarios WHERE status = ?',
+            ['pendente']
+        )
+
         res.status(200).json({
-            status: "success",
+            status:"success",
             message: "Cadastros pendentes listados com sucesso",
-            data: cadastro
+            data: rows
         })
+
     } catch (error) {
+        console.log(error)
         res.status(500).json({
             status: "error",
             message: "Erro ao listar cadastros pendentes"
@@ -316,27 +333,32 @@ app.patch('/cadastros-a-aprovar/:id', async (req, res) => {
     }
 
     try {
-        const usuario = await prisma.usuarios.update({
-            where: {
-                id: Number(req.params.id)
-            },
-            data: {
-                status: novoStatus
-            }
-        })
+        const [result] = await pool.query(
+            'UPDATE usuarios SET status = ? WHERE id = ?',
+            [novoStatus, req.params.id]
+        )
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({
+                status: "error",
+                message: "Usuário não encontrado"
+            })
+        }
+
+        const [rows] = await pool.query(
+            'SELECT id, nome, email, status, data_cadastro FROM usuarios WHERE id = ?',
+            [req.params.id]
+        )
+        
     
     res.status(200).json({
         status: "success",
-        data: {
-            id: usuario.id,
-            nome: usuario.nome,
-            email: usuario.email,
-            status: status,
-            data_cadastro: usuario.data_cadastro
-        }
-    })
+        data: rows[0]
+        })
+    
     
     } catch (error) {
+        console.log(error)
         res.status(500).json({
             status: "error",
             message: "Erro ao atualizar cadastro"
@@ -348,25 +370,18 @@ app.patch('/cadastros-a-aprovar/:id', async (req, res) => {
 
 app.get('/pagamentos-a-aprovar', async (req, res) => {
     try {
-        const pagamentos = await prisma.pagamentos.findMany({
-            where: {
-                status:"pendente"
-            }, 
-            select: {
-                id: true,
-                usuario_id: true,
-                valor: true,
-                status: true,
-                data_pagamento: true
-            } 
-        })
+        const [rows] = await pool.query(
+            'SELECT id, usuario_id, valor, status, data_pagamento FROM pagamentos WHERE status = ?',
+            ['pendente']
+        )
             
         res.status(200).json ({
             status:"success",
-            data: pagamentos
+            data: rows
         })          
         
         } catch (error) {
+            console.log(error)
             res.status(500).json({
             status: "error",
             message: "Error ao listar pagamentos pendentes"
@@ -400,26 +415,35 @@ app.get('/pagamentos-a-aprovar', async (req, res) => {
         }
 
         try {
-            const pagamento = await prisma.pagamentos.update({
-                where: {
-                    id: Number(req.params.id)
-                },
-                data: {
-                    status: novoStatus
-                }
+           const [result] = await pool.query(
+            'UPDATE pagamentos SET status = ? WHERE id = ?',
+            [novoStatus, req.params.id]
+           )
+            
+           if (result.affectedRows === 0) {
+            return res.status(404).json({
+                status: "error",
+                message: "Pagamento não encontrado"
             })
+           }
+            
+           const [rows] = await pool.query(
+            'SELECT id, valor, status, data_pagamento FROM pagamentos WHERE id = ?',
+            [req.params.id]
+           )
 
             res.status(200).json({
                 status: "success",
                 data: {
-                    id: pagamento.id,
-                    valor: Number(pagamento.valor),
-                    status: status,
-                    data_pagamento: pagamento.data_pagamento
+                    id: rows[0].id,
+                    valor: Number(rows[0].valor),
+                    status:rows.status,
+                    data_pagamento: rows.data_pagamento
                 }
             })
 
         } catch (error) {
+            console.log(error)
             res.status(500).json({
                 status: "error",
                 message: "Erro ao atualizar pagamento"
@@ -502,30 +526,37 @@ app.patch('/subafiliados/:id', async (req, res) => {
 
     if (nome !== undefined) {
         updates.push('nome = ?');
-        values.push(nome);
+        valores.push(nome);
     }
     if (email !== undefined) {
         updates.push('email = ?');
-        values.push(email);
+        valores.push(email);
     }
     if (status !== undefined) {
         updates.push('status = ?');
-        values.push(status);
+        valores.push(status);
     }
 
     valores.push(parseInt(req.params.id));
 
     try{
-        await pool.execute(
-            'UPDATE subafiliados SET ${updates.join(', ')} WHERE id = ?', valores
+        const [subAfiliados] = await pool.execute(
+            `UPDATE subafiliados SET ${updates.join(', ')} WHERE id = ?`, valores
         ); 
+
+    
+    const [subAfiliadoAtualizado] = await pool.execute(
+        'SELECT id, nome, email, status, data_cadastro FROM subafiliados WHERE id = ?',
+        [parseInt(req.params.id)]
+    );
 
         res.status(200).json({
             status: "success",
             message: "Sub-Afiliado editado com sucesso",
-            data: subAfiliados
-        })
+            data: subAfiliadoAtualizado[0]
+        });
     } catch(erro) {
+        console.error(erro)
         res.status(500).json({
             status: "error",
             message: "Erros ao editar Sub-Afiliados"
