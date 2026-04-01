@@ -254,33 +254,24 @@ app.get('/comissoes', async (req, res) =>{
 })
 
 app.get('/comissoes-subafiliado/:id', async (req, res) => {
-    try{
-        const subafiliadoId = parseInt(req.params.id);
+    const subafiliadoId = parseInt(req.params.id);  
 
-        const totalComissoes = await prisma.comissoes_subafiliados.aggregate({
-            _sum: {
-                valor: true
-            },
-            where: {
-                subafiliado_id: subafiliadoId
-            }
-        });
+    try{      
 
-        const comissoesSubafiliados = await prisma.comissoes_subafiliados.findMany({
-            where: {
-                subafiliado_id: subafiliadoId
-            },
-            select: {
-                id: true,
-                valor: true,
-                data: true
-            }
-        })
+        const [result] = await pool.execute(
+            'SELECT SUM(valor) as total FROM comissoes_subafiliados WHERE subafiliado_id = ?', [subafiliadoId]
+        );
+        const totalComissoes = result[0].total;
+
+        const [comissoesSubafiliados] = await pool.execute(
+            'SELECT id, valor, data FROM comissoes_subafiliados WHERE subafiliado_id = ?', [subafiliadoId]
+        );
+
         res.status(200).json({
             status: "success",
             message: "comissões dos Sub-Afiliados listados com sucesso",
             data:  {
-                Comissoes: totalComissoes._sum.valor || 0,
+                Comissoes: result[0].total || 0,
                 data: comissoesSubafiliados
             }
         })
@@ -466,28 +457,23 @@ app.get('/pagamentos-a-aprovar', async (req, res) => {
 
 app.get('/subafiliados', async (req, res) => {
     try {
-        let subAfiliados = []
+        const { afiliado_id } = req.query;
 
-        if(req.query){
-            subAfiliados = await prisma.subafiliados.findMany({
-                where: {
-                    afiliado_id: req.query.afiliado_id
-                }
-            })
+        let query = 'SELECT * FROM subafiliados';
+        let values = [];
 
-            res.status(200).json({
+        if (afiliado_id) {
+            query += ' WHERE afiliado_id = ?';
+            values.push(parseInt(afiliado_id));
+        }
+
+        const [subAfiliados] = await pool.execute(query, values);
+
+        res.status(200).json({
             status: "success",
             message: "Sub-Afiliados listados com sucesso",
             data: subAfiliados
-            })
-        } else {
-        subAfiliados = await prisma.subafiliados.findMany({
-            where: {
-                afiliado_id: req.body.afiliado_id
-            }
-        })
-        }
-
+        });
     } catch(error) {
         res.status(500).json({
             status: "error",
@@ -497,24 +483,24 @@ app.get('/subafiliados', async (req, res) => {
 })
 
 app.post('/subafiliados', async (req, res) => {
-    if (!req.body.afiliado_id || !req.body.nome || !req.body.email) {
+
+    const {afiliado_id, nome, email} = req.body
+
+    if (!afiliado_id || !nome || !email) {
         return res.status(400).json({
             status: "error",
             message: "Campos obrigatórios não preenchidos"
         })
     }
     try{
-        const subAfiliados = await prisma.subafiliados.create({
-            data: {
-                afiliado_id: req.body.afiliado_id,
-                nome: req.body.nome,
-                email: req.body.email,
-            }
-        })
+        const [resultado] = await pool.execute(
+            'INSERT INTO subafiliados (afiliado_id, nome, email) VALUES (?, ?, ?)',
+            [afiliado_id, nome, email]
+        );
         res.status(201).json({
             status: "success",
             message: "Sub-Afiliado criado com sucesso",
-            data: subAfiliados
+            data: {id: resultado.insertId, afiliado_id, nome, email}
         }) 
     } catch(error){
         res.status(500).json({
@@ -535,21 +521,42 @@ app.patch('/subafiliados/:id', async (req, res) => {
         });
     }
     
+    const updates = [];
+    const valores = [];
+
+    if (nome !== undefined) {
+        updates.push('nome = ?');
+        valores.push(nome);
+    }
+    if (email !== undefined) {
+        updates.push('email = ?');
+        valores.push(email);
+    }
+    if (status !== undefined) {
+        updates.push('status = ?');
+        valores.push(status);
+    }
+
+    valores.push(parseInt(req.params.id));
+
     try{
-        const subAfiliados = await prisma.subafiliados.update({
-            where: { id: parseInt(req.params.id) },
-            data: {
-                nome: nome !== undefined ? nome : undefined,
-                email: email !== undefined ? email : undefined,
-                status: status !== undefined ? status : undefined
-            }
-        })
+        await pool.execute(
+            `UPDATE subafiliados SET ${updates.join(', ')} WHERE id = ?`, valores
+        ); 
+
+    
+    const [subAfiliadoAtualizado] = await pool.execute(
+        'SELECT id, nome, email, status, data_cadastro FROM subafiliados WHERE id = ?',
+        [parseInt(req.params.id)]
+    );
+
         res.status(200).json({
             status: "success",
             message: "Sub-Afiliado editado com sucesso",
-            data: subAfiliados
-        })
+            data: subAfiliadoAtualizado[0]
+        });
     } catch(erro) {
+        console.error(erro)
         res.status(500).json({
             status: "error",
             message: "Erros ao editar Sub-Afiliados"
@@ -560,30 +567,25 @@ app.patch('/subafiliados/:id', async (req, res) => {
 // ROTAS DE Links //
 app.get('/links-afiliado/:id', async (req, res) => {
 
-    try{
-        const linksAfiliadoId = parseInt(req.params.id);
+    const linksAfiliadoId = parseInt(req.params.id);
 
-        const linksAfiliado = await prisma.links_afiliado.findMany({
-            where: {
-                afiliado_id: linksAfiliadoId
-            },
-            select: {
-                id: true,
-                link: true
-            }
-        })
+    try{
+        
+        const [linksAfiliado] = await pool.execute(
+            'SELECT id, link FROM links_afiliado WHERE afiliado_id = ?', [linksAfiliadoId]
+        );
+
         res.status(200).json({
             status: "success",
             message: "Links do Afiliado listados com sucesso",
             data: linksAfiliado
-        })
+        });
     } catch(error) {
         res.status(500).json({
             status: "error",
             message: "Error ao listar links do Afiliado"
         })
     }
-
 })
 
 
