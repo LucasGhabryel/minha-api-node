@@ -2,6 +2,9 @@ import express from "express"
 import bodyParser from "body-parser" 
 import { PrismaClient } from "@prisma/client"
 import pool from './db.js'
+import jwt from "jsonwebtoken"
+import 'dotenv/config'
+
 
 const prisma = new PrismaClient()
 
@@ -21,6 +24,31 @@ app.get('/', (req, res) => {
     })
 })
 
+// MIDDLEWARE DE AUTENTICAÇÃO //
+
+const autenticar = (req, res, next) => {
+    const authHeader = req.headers['authorization']
+    const token = authHeader && authHeader.split(' ')[1]
+
+    if(!token) {
+        return res.status(401).json({
+            error: "error",
+            message: "Token não fornecido"
+        })
+    }
+
+    try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET)
+        req.usuario = decoded
+        next()
+    } catch (error) {
+        return res.status(403).json({
+            status: "error",
+            message: "Token inválido ou expirado"
+        })
+    }
+}
+
 // ROTAS DE AUTENTICAÇÃO //
 
 app.post('/login', async (req, res) =>{
@@ -37,29 +65,30 @@ app.post('/login', async (req, res) =>{
             [req.body.email]
         )
 
-        const user = rows[0]
+        const usuario = rows[0]
 
-        if (!user) {
-            return res.status(404).json({
-                status: "error",
-                message: "Usuário não encontrado"
-            })
-        }
-
-        if (req.body.senha !== user.senha) {
+        if (!usuario || usuario.senha !== req.body.senha) {
             return res.status(401).json({
                 status: "error",
-                message: "Senha incorreta"
+                message: "Email ou senha inválidos"
             })
         }
+
+        const token = jwt.sign(
+            { id: usuario.id, email: usuario.email },
+            process.env.JWT_SECRET,
+            { expiresIn: '8h' }
+        )
+
         res.status(200).json({
             status: "success",
             message: "Login bem-sucedido",
             data: {
-                id: user.id,
-                nome: user.nome,
-                email: user.email,
-                tipo: user.tipo_usuario
+                token,
+                id: usuario.id,
+                nome: usuario.nome,
+                email: usuario.email,
+                tipo: usuario.tipo_usuario
             }
         })
     } catch (error) {
@@ -73,7 +102,7 @@ app.post('/login', async (req, res) =>{
 
 // ROTAS DE USUARIOS //
 
-app.post('/usuarios', async (req, res) => {
+app.post('/usuarios', autenticar, async (req, res) => {
 if (!req.body.nome || !req.body.email || !req.body.senha || !req.body.tipo_usuario) {
     return res.status(400).json({
         status: "error",
@@ -104,7 +133,7 @@ if (!req.body.nome || !req.body.email || !req.body.senha || !req.body.tipo_usuar
 }
 })
 
-app.get('/usuarios', async (req, res) => {
+app.get('/usuarios', autenticar,  async (req, res) => {
 try {
     
     let query = 'SELECT id, nome, email, tipo_usuario, status, data_cadastro FROM usuarios WHERE 1=1'
@@ -142,7 +171,7 @@ try {
  }
 })
 
-app.patch('/usuarios/:id', async (req, res) => {
+app.patch('/usuarios/:id', autenticar,  async (req, res) => {
 if (!req.body.nome || !req.body.email || !req.body.senha || !req.body.tipo_usuario) {
     return res.status(400).json({
         status: "error",
@@ -181,7 +210,7 @@ if (!req.body.nome || !req.body.email || !req.body.senha || !req.body.tipo_usuar
     }
 })
 
-app.delete('/usuarios/:id', async (req, res) => {
+app.delete('/usuarios/:id', autenticar, async (req, res) => {
 try {
    const [result] = await pool.query(
     'DELETE FROM usuarios WHERE id = ?',
@@ -437,8 +466,8 @@ app.get('/pagamentos-a-aprovar', async (req, res) => {
                 data: {
                     id: rows[0].id,
                     valor: Number(rows[0].valor),
-                    status:rows.status,
-                    data_pagamento: rows.data_pagamento
+                    status:rows[0].status,
+                    data_pagamento: rows[0].data_pagamento
                 }
             })
 
