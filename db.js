@@ -7,8 +7,9 @@ const pool = mysql.createPool({
     port: 19161,
     database: 'railway',
     user: 'root',
-    password: process.env.XRGPlBKksfjyBHvwldZGsZHtlOLTUmgU
+    password: 'XRGPlBKksfjyBHvwldZGsZHtlOLTUmgU'
 
 })
 
 export default pool
+console.log('USANDO DB.JS COM SENHA')
