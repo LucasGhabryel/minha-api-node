@@ -507,25 +507,34 @@
 
     app.post('/subafiliados', autenticar, async (req, res) => {
 
-        const {afiliado_id, nome, email} = req.body
+        const {afiliado_id, nome, email, percentual} = req.body
 
-        if (!afiliado_id || !nome || !email) {
+        if (!afiliado_id || !nome || !email || percentual == null) {
             return res.status(400).json({
                 status: "error",
                 message: "Campos obrigatórios não preenchidos"
             })
         }
+
+        if (percentual < 0 || percentual > 100){
+            return res.status(400).json({
+                status: "error",
+                message: "Percentual deve estar entre 0 e 100"
+            });
+        }
+
         try{
             const [resultado] = await pool.execute(
-                'INSERT INTO subafiliados (afiliado_id, nome, email) VALUES (?, ?, ?)',
-                [afiliado_id, nome, email]
+                'INSERT INTO subafiliados (afiliado_id, nome, email, percentual) VALUES (?, ?, ?, ?)',
+                [afiliado_id, nome, email, percentual]
             );
             res.status(201).json({
                 status: "success",
                 message: "Sub-Afiliado criado com sucesso",
-                data: {id: resultado.insertId, afiliado_id, nome, email}
+                data: {id: resultado.insertId, afiliado_id, nome, email, percentual}
             }) 
         } catch(error){
+            console.log
             res.status(500).json({
                     status: "error",
                     message: "Erro ao criar Sub-Afiliado"
@@ -535,12 +544,12 @@
 
     app.patch('/subafiliados/:id', autenticar, async (req, res) => {
         
-        const {nome, email, status} = req.body;
+        const {nome, email, status, percentual} = req.body;
 
-        if (nome === undefined && email === undefined && status === undefined) {
+        if (nome === undefined && email === undefined && status === undefined && percentual === undefined) {
             return res.status(400).json({
             status: "error",
-            message: "Nenhum campo válido para atualização foi fornecido. Os campos permitidos são: nome, email, status."
+            message: "Nenhum campo válido para atualização foi fornecido. Os campos permitidos são: nome, email, status, percentual."
             });
         }
         
@@ -559,6 +568,10 @@
             updates.push('status = ?');
             valores.push(status);
         }
+        if (percentual !== undefined) {
+            updates.push('percentual = ?');
+            valores.push(percentual);
+        }
 
         valores.push(parseInt(req.params.id));
 
@@ -569,7 +582,7 @@
 
         
         const [subAfiliadoAtualizado] = await pool.execute(
-            'SELECT id, nome, email, status, data_cadastro FROM subafiliados WHERE id = ?',
+            'SELECT id, nome, email, status, percentual, data_cadastro FROM subafiliados WHERE id = ?',
             [parseInt(req.params.id)]
         );
 
@@ -578,8 +591,10 @@
                 message: "Sub-Afiliado editado com sucesso",
                 data: subAfiliadoAtualizado[0]
             });
+            
         } catch(erro) {
-            console.error(erro)
+            const {nome, email, status, percentual} = req.body;
+            console.error('body recebido', req.body)
             res.status(500).json({
                 status: "error",
                 message: "Erros ao editar Sub-Afiliados"
