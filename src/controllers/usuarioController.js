@@ -1,12 +1,17 @@
    import pool from '../../db.js'
    
    export const criarUsuario = async (req, res) => {
-    if (!req.body.nome || !req.body.email || !req.body.senha || !req.body.tipo_usuario) {
+    if (!req.body.nome || !req.body.email || !req.body.tipo_usuario) {
         return res.status(400).json({
             status: "error",
             message: "Campos obrigatórios não preenchidos"
         })
     }
+
+    if (!req.body.senha || req.body.senha === ""){
+        req.body.senha = "nexus@123";
+    }
+
         try {
     const [result] = await pool.query (
         'INSERT INTO usuarios (nome, email, senha, tipo_usuario) VALUES (?, ?, ?, ?)',
