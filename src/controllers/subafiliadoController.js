@@ -2,15 +2,10 @@
  
  export const listarSubafiliados = async (req, res) => {
         try {
-            const { afiliado_id } = req.query;
+            const referencia_id = req.usuario.id;
 
-            let query = 'SELECT id, afiliado_id, referencia_id, nome, email, percentual, status, data_cadastro FROM subafiliados';
-            let values = [];
-
-            if (afiliado_id) {
-                query += ' WHERE afiliado_id = ?';
-                values.push(parseInt(afiliado_id));
-            }
+            const query = `SELECT id, referencia_id, nome, email, status, data_cadastro, tipo_usuario FROM usuarios WHERE tipo_usuario = 3 AND referencia_id = ?`;
+            const values = [referencia_id];
 
             const [subAfiliados] = await pool.execute(query, values);
 
