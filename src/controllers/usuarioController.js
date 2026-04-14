@@ -7,14 +7,15 @@
             message: "Campos obrigatórios não preenchidos"
         })
     }
-        try {
+    
+    try {
     const [result] = await pool.query (
         'INSERT INTO usuarios (nome, email, senha, tipo_usuario) VALUES (?, ?, ?, ?)',
     [req.body.nome, req.body.email, req.body.senha, req.body.tipo_usuario]
     )
     
     res.status(201).json({
-        status: "success",
+        status: "success",  
         message: "Usuário criado com sucesso",
         data: {
             id: result.insertId,
@@ -24,6 +25,7 @@
         }
     }) 
     } catch (error) {
+        console.log(error)
         res.status(500).json({
             status: "error",
             message: "Erro ao criar usuário"
