@@ -44,7 +44,7 @@
     export const listarUsuarios = async (req, res) => {
     try {
         
-        let query = 'SELECT id, nome, email, tipo_usuario, status, data_cadastro FROM usuarios WHERE 1=1'
+        let query = 'SELECT id, nome, email, tipo_usuario, status, data_cadastro, referencia_id FROM usuarios WHERE 1=1'
         const params = []
 
         if (req.query.nome) {
