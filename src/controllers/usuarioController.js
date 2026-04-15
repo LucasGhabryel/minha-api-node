@@ -103,6 +103,11 @@
         valores.push(req.body.tipo_usuario);
     }
 
+     if (req.body.status) {
+        campos.push("status = ?");
+        valores.push(req.body.status);
+    }
+    
     if (campos.length === 0) {
         return res.status(400).json({
             status: "error",
