@@ -47,7 +47,7 @@ import pool from '../../db.js'
             }
 
             try {
-            const [result] = await pool.query(
+            const [result] = await pool.execute(
                 'UPDATE pagamentos SET status = ? WHERE id = ?',
                 [novoStatus, req.params.id]
             )
@@ -59,7 +59,7 @@ import pool from '../../db.js'
                 })
             }
                 
-            const [rows] = await pool.query(
+            const [rows] = await pool.execute(
                 'SELECT id, valor, status, data_pagamento FROM pagamentos WHERE id = ?',
                 [req.params.id]
             )
