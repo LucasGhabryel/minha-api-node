@@ -1,6 +1,24 @@
 import pool from '../../db.js'
 
-export const listarLinkAfiliados = async (req, res) => {
+export const listarLinkAfiliadosGeral = async (req,res) =>{
+    
+    try{
+        const [linksAfiliados] = await pool.execute('SELECT id, afiliado_id, link FROM links_afiliado')
+
+        res.status(200).json({
+            status: "success",
+            message: "Links do Afiliado listados com sucesso",
+            data: linksAfiliados
+        });
+    } catch(error){
+        res.status(500).json({
+            status: "error",
+            message: "Error ao listar links do Afiliado"
+        })
+    }
+}
+
+export const listarLinkAfiliadosId = async (req, res) => {
 
         const linksAfiliadoId = req.params.id;
 
@@ -37,7 +55,7 @@ export const criarLinkAfiliados = async (req, res) => {
     const link = req.body.link;
 
     try{
-        const [result] = await pool.query('INSERT INTO links_afiliado (afiliado_id, link) VALUES (?, ?)', [afiliado_id, link]);
+        const [result] = await pool.execute('INSERT INTO links_afiliado (afiliado_id, link) VALUES (?, ?)', [afiliado_id, link]);
 
         res.status(201).json({
             status: "success",
