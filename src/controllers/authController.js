@@ -10,7 +10,7 @@ export const login = async (req, res) => {
             })
         }
         try {
-            const [rows] = await pool.query(
+            const [rows] = await pool.execute(
                 'SELECT * FROM usuarios WHERE email = ?',
                 [req.body.email]
             )
