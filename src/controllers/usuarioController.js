@@ -13,7 +13,7 @@
         req.body.senha = "nexus@123";
     }
 
-    const status = req.body.tipo_usuario === 3 ? UserStatus[2] : 1
+    const status = req.body.tipo_usuario === 3 ? 2 : 1
 
         try {
     const [result] = await pool.execute (
