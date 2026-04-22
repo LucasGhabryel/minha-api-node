@@ -1,6 +1,8 @@
     import bodyParser from "body-parser" 
     import cors from 'cors'
     import express from 'express'
+    import swaggerUi from "swagger-ui-express";
+    import swaggerFile from "./swagger-output.json" with { type: "json" }
 
     import authRoutes from './src/routes/authRoutes.js'
     import cadastrosRoutes from './src/routes/cadastroRoutes.js'
@@ -26,6 +28,8 @@
 
     // Rotas //
 
+    app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerFile));
+
     app.use('/v2',authRoutes)
     app.use('/v2',cadastrosRoutes)
     app.use('/v2',comissaoRoutes)
@@ -40,5 +44,6 @@
     const PORT = process.env.PORT || 3000
 
     app.listen(PORT, () => {
-    console.log("Servidor rodando")
-    })  
+    console.log(`Servidor rodando em http://localhost:${PORT}`);
+    console.log(`Swagger em http://localhost:${PORT}/api-docs`);
+    });
