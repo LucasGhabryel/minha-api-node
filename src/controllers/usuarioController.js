@@ -13,11 +13,11 @@
         req.body.senha = "nexus@123";
     }
 
-    const status = req.body.tipo_usuario === 3 ? UserStatus[2] : null
+    const status = req.body.tipo_usuario === 3 ? UserStatus[2] : 1
 
         try {
     const [result] = await pool.execute (
-        'INSERT INTO usuarios (nome, referencia_id, email, senha, tipo_usuario, status) VALUES (?, ?, ?, ?, ?)',
+        'INSERT INTO usuarios (nome, referencia_id, email, senha, tipo_usuario, status) VALUES (?, ?, ?, ?, ?, ?)',
     [req.body.nome, req.body.referencia_id, req.body.email, req.body.senha, req.body.tipo_usuario, status]
     )
     

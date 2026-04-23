@@ -33,10 +33,10 @@
             })
         }
 
-        if (percentual < 0 || percentual > 100){
+        if (percentual < 0 || percentual > 50){
             return res.status(400).json({
                 status: "error",
-                message: "Percentual deve estar entre 0 e 100"
+                message: "Percentual deve estar entre 0 e 50"
             });
         }
 
@@ -51,7 +51,7 @@
                 data: {id: resultado.insertId, afiliado_id, nome, email, percentual, referencia_id}
             }) 
         } catch(error){
-            console.log
+            console.log(error)
             res.status(500).json({
                     status: "error",
                     message: "Erro ao criar Sub-Afiliado"
