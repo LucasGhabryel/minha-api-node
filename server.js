@@ -11,6 +11,7 @@
     import usuarioRoutes from './src/routes/usuarioRoutes.js'
     import empresasRoutes from './src/routes/empresasRoutes.js'
 
+    
     const app = express()
     app.use(cors())
     app.use(bodyParser.json())
