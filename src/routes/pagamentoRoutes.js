@@ -4,7 +4,7 @@ import autenticar from '../middlewares/autenticar.js'
 
 const router = express.Router()
 
-router.get('/pagamentos-a-aprovar', autenticar, listarPagamentosPendentes)
+router.get('/pagamentos-a-aprovar/:id', autenticar, listarPagamentosPendentes)
 router.patch('/pagamento-a-aprovar/:id', autenticar, atualizarPagamento)
 
 export default router   
