@@ -8,3 +8,5 @@ router.get('/cadastro-a-aprovar', autenticar, listarCadastrosPendente)
 router.patch('/cadastro-a-aprovar/:id', autenticar, atualizarCadastro)
 
 export default router
+
+
