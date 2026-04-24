@@ -12,6 +12,7 @@
     import subafiliadosRoutes from './src/routes/subafiliadoRoutes.js'
     import usuarioRoutes from './src/routes/usuarioRoutes.js'
     import empresasRoutes from './src/routes/empresasRoutes.js'
+    import calculoComissaoRoutes from './src/routes/calculoComissaoRoutes.js'
 
     
     const app = express()
@@ -39,6 +40,7 @@
     app.use('/v2',subafiliadosRoutes)
     app.use('/v2',usuarioRoutes)
     app.use('/v2', empresasRoutes)
+    app.use('/v2', calculoComissaoRoutes)
 
 
 
