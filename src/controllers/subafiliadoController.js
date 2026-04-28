@@ -4,7 +4,7 @@
         try {
             const referencia_id = req.usuario.id;
 
-            const query = `SELECT id, referencia_id, nome, email, status, data_cadastro, tipo_usuario FROM usuarios WHERE tipo_usuario = 3 `;
+            const query = `SELECT id, referencia_id, nome, email, status, data_cadastro, tipo_usuario FROM usuarios WHERE tipo_usuario = 3 AND referencia_id = ?`;
             const values = [referencia_id];
 
             const [subAfiliados] = await pool.execute(query, values);
