@@ -1,7 +1,8 @@
 const UserStatus = Object.freeze({
-    1:'Aprovado',
-    2:'Pendente',
-    3:'Rejeitado'
-})
+    Aprovado: 1,
+    Pendente: 2,
+    Rejeitado: 3
+    
+});
 
 export default UserStatus

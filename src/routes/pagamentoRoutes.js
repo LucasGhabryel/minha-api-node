@@ -8,4 +8,5 @@ router.get('/pagamentos-a-aprovar', autenticar, listarPagamentosPendentes)
 router.post('/pagamentos-a-aprovar', autenticar, criarPagamento)
 router.patch('/pagamentos-a-aprovar/:id', autenticar, atualizarPagamento)
 
+
 export default router   

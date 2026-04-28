@@ -4,7 +4,7 @@
         try {
             const referencia_id = req.usuario.id;
 
-            const query = `SELECT id, referencia_id, nome, email, status, data_cadastro, tipo_usuario FROM usuarios WHERE tipo_usuario = 3 AND referencia_id = ?`;
+            const query = `SELECT id, referencia_id, nome, email, status, data_cadastro, tipo_usuario FROM usuarios WHERE tipo_usuario = 3 `;
             const values = [referencia_id];
 
             const [subAfiliados] = await pool.execute(query, values);
@@ -24,7 +24,9 @@
 
     export const criarSubafiliado = async (req, res) => {
 
-        const {afiliado_id, nome, email, percentual, referencia_id} = req.body
+        const {afiliado_id, nome, email, percentual,} = req.body
+
+        const referencia_id = req.usuario.id
 
         if (!afiliado_id || !nome || !email || percentual == null || !referencia_id) {
             return res.status(400).json({

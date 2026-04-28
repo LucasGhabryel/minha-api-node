@@ -13,12 +13,14 @@
         req.body.senha = "nexus@123";
     }
 
-    const status = req.body.tipo_usuario === 3 ? 2 : 1
+    const referenciaId = req.body.referencia_id ?? null
+    const status = req.body.tipo_usuario === 3 ? UserStatus.Pendente : UserStatus.Aprovado
+
 
         try {
     const [result] = await pool.execute (
         'INSERT INTO usuarios (nome, referencia_id, email, senha, tipo_usuario, status) VALUES (?, ?, ?, ?, ?, ?)',
-    [req.body.nome, req.body.referencia_id, req.body.email, req.body.senha, req.body.tipo_usuario, status]
+    [req.body.nome, referenciaId, req.body.email, req.body.senha, req.body.tipo_usuario, status]
     )
     
     res.status(201).json({
@@ -33,7 +35,7 @@
         }
     }) 
     } catch (error) {
-        console.log(error)
+        console.log(error);
         res.status(500).json({
             status: "error",
             message: "Erro ao criar usuário"
