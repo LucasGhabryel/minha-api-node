@@ -144,7 +144,7 @@ export const editarEmpresa = async (req, res) => {
 
 export const deletarEmpresa = async (req, res) => {
     try {
-        const [result] = await pool.query(
+        const [result] = await pool.execute(
             'DELETE FROM Contas WHERE usuario_id = ?',
             [req.params.id]
         )

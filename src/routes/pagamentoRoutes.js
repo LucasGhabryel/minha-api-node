@@ -1,10 +1,12 @@
 import express from "express"
-import { listarPagamentosPendentes, atualizarPagamento } from "../controllers/pagamentoController.js"
+import { listarPagamentosPendentes, criarPagamento, atualizarPagamento } from "../controllers/pagamentoController.js"
 import autenticar from '../middlewares/autenticar.js'
 
 const router = express.Router()
 
-router.get('/pagamentos-a-aprovar/:id', autenticar, listarPagamentosPendentes)
-router.patch('/pagamento-a-aprovar/:id', autenticar, atualizarPagamento)
+router.get('/pagamentos-a-aprovar', autenticar, listarPagamentosPendentes)
+router.post('/pagamentos-a-aprovar', autenticar, criarPagamento)
+router.patch('/pagamentos-a-aprovar/:id', autenticar, atualizarPagamento)
+
 
 export default router   

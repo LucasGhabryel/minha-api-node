@@ -2,7 +2,7 @@
 
  export const listarCadastrosPendente = async (req, res) => {
         try {
-            const [rows] = await pool.query(
+            const [rows] = await pool.execute(
                 'SELECT id, nome, email, status FROM usuarios WHERE status = ?',
                 ['pendente']
             )
@@ -48,7 +48,7 @@
         }
 
         try {
-            const [result] = await pool.query(
+            const [result] = await pool.execute(
                 'UPDATE usuarios SET status = ? WHERE id = ?',
                 [novoStatus, req.params.id]
             )

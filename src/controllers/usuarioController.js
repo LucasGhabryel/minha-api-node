@@ -16,6 +16,7 @@
     const referenciaId = req.body.referencia_id ?? null
     const status = req.body.tipo_usuario === 3 ? UserStatus.Pendente : UserStatus.Aprovado
 
+
         try {
     const [result] = await pool.execute (
         'INSERT INTO usuarios (nome, referencia_id, email, senha, tipo_usuario, status) VALUES (?, ?, ?, ?, ?, ?)',
@@ -63,7 +64,7 @@
             params.push(req.query.tipo_usuario)
         }
 
-        const [rows] = await pool.query(query, params)
+        const [rows] = await pool.execute(query, params)
             
             res.status(200).json({
                 status: "success",
@@ -121,7 +122,7 @@
         
         valores.push(req.params.id);
 
-        const[result] = await pool.query(query, valores);
+        const[result] = await pool.execute(query, valores);
 
         if (result.affectedRows === 0) {
             return res.status(404).json({
@@ -149,7 +150,7 @@
 
     export const deletarUsuario = async (req, res) => {
     try {
-    const [result] = await pool.query(
+    const [result] = await pool.execute(
         'DELETE FROM usuarios WHERE id = ?',
         [req.params.id]
     )

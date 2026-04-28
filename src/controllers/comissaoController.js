@@ -19,7 +19,7 @@ import pool from '../../db.js'
             params.push(new Date(req.query.data_fim))
         }
 
-        const [rows] = await pool.query(query, params)
+        const [rows] = await pool.execute(query, params)
 
 
             const total_comissoes = rows.reduce((acc, c) => acc + Number(c.valor), 0)
