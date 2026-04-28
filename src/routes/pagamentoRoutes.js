@@ -4,8 +4,10 @@ import autenticar from '../middlewares/autenticar.js'
 
 const router = express.Router()
 
-router.get('/pagamentos-a-aprovar', autenticar, listarPagamentosPendentes)
+
 router.post('/pagamentos-a-aprovar', autenticar, criarPagamento)
+router.get('/pagamentos-a-aprovar', autenticar, listarPagamentosPendentes)
+router.get('/pagamentos-a-aprovar/:id', autenticar, listarPagamentosPendentes)
 router.patch('/pagamentos-a-aprovar/:id', autenticar, atualizarPagamento)
 
 
