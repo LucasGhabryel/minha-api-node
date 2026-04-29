@@ -70,3 +70,91 @@ import pool from '../../db.js'
             })
         }
     }
+
+export const criarComissoes = async ( req, res ) => {
+    if (!req.body.usuario_id || !req.body.percentual) {
+        return res.status(400).json({
+            status: "error",
+            message: "Campos obrigatórios não preenchidos"
+        })
+    }
+
+    const dataHoraAtual = new Date();
+    const dataFormatada = dataHoraAtual.toISOString().slice(0, 19).replace('T', ' ');
+
+    try {
+        const [result] = await pool.execute (
+            'INSERT INTO comissoes (usuario_id, percentual, data) VALUES (?, ?, ?)', [req.body.usuario_id, req.body.percentual, dataFormatada]
+        )
+        
+        res.status(201).json({
+            status: "success",
+            message: "Comissão criada com sucesso",
+            data: {
+                id: result.insertId,
+                Usuário_id: req.body.usuario_id,
+                Percentual: req.body.percentual         
+            }
+        }) 
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({
+            status: "error",
+            message: "Erro ao criar comissão"
+        })
+    }
+}
+
+
+export const editarComissoes = async ( req, res ) => {
+    const campos = [];
+    const valores = [];
+    
+    if (req.body.usuario_id) {
+        campos.push("usuario_id = ?");
+        valores.push(req.body.usuario_id);
+    }
+    
+     if (req.body.percentual) {
+        campos.push("percentual = ?");
+        valores.push(req.body.percentual);
+    }
+
+     if (req.body.data) {
+        campos.push("data = ?");
+        valores.push(req.body.data);
+    }
+
+    if (campos.length === 0) {
+        return res.status(400).json({
+            status: "error",
+            message: "Nenhum campo a atualizar"
+        });
+    }
+
+    try {
+        const query = ` UPDATE comissoes SET ${campos.join(", ")} WHERE id = ?`;
+        
+        valores.push(req.params.id);
+
+        const[result] = await pool.execute(query, valores);
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({
+                status:"error",
+                message:"Comissão não encontrado"
+            });
+        }
+        res.status(200).json({
+            status: "sucess",
+            message: "Comissão atualizado com sucesso"
+        }); 
+
+    } catch (error) {
+        console.log(error)
+        res.status(500).json({
+            error:"error",
+            message:"Error ao atualizar comissoes"
+        })
+    }
+}
