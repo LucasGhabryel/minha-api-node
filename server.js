@@ -13,7 +13,7 @@
     import usuarioRoutes from './src/routes/usuarioRoutes.js'
     import empresasRoutes from './src/routes/empresasRoutes.js'
     import calculoComissaoRoutes from './src/routes/calculoComissaoRoutes.js'
-
+    import vendaRoutes from './src/routes/vendaRoutes.js'
     
     const app = express()
     app.use(cors())
@@ -41,7 +41,7 @@
     app.use('/v2',usuarioRoutes)
     app.use('/v2', empresasRoutes)
     app.use('/v2', calculoComissaoRoutes)
-
+    app.use('/v2', vendaRoutes)
 
 
     const PORT = process.env.PORT || 3000
