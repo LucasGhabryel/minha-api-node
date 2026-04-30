@@ -129,8 +129,8 @@
                 message:"Usuário não encontrado"
             });
         }
-        res.status(200).json({
-            status: "sucess",
+        return res.status(200).json({
+            status: "success",
             message: "Usuário atualizado com sucesso"
         }); 
 

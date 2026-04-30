@@ -1,5 +1,6 @@
 import pool from '../../db.js'
 import jwt from "jsonwebtoken"
+import UserStatus from '../utils/statusUsuario.js'
 
 export const login = async (req, res) => {
 
@@ -21,6 +22,13 @@ export const login = async (req, res) => {
                 return res.status(401).json({
                     status: "error",
                     message: "Email ou senha inválidos"
+                })
+            }
+
+            if(usuario.status !== 1) {
+                return res.status(403).json({
+                    status: "error",
+                    message: "Usuário não aprovado"
                 })
             }
 
