@@ -2,10 +2,10 @@ import pool from '../../db.js'
 
 export const listarVendas = async (req, res) => {
     try{
-        const usuario_id = req.usuario.id;
+        const afiliado_id = req.params.id;
         
         const query = 'SELECT id, afiliado_id, id_compra, id_produto, valor, data_venda FROM Vendas WHERE afiliado_id = ?';
-        const values = [usuario_id]
+        const values = [afiliado_id]
 
         const [Vendas] = await pool.execute(query, values);
     
@@ -35,7 +35,7 @@ export const criarVenda = async (req, res) => {
         }
     
     try {
-        const afiliado_id = req.usuario.id
+        const afiliado_id = req.body.afiliado_id
 
         const [result] = await pool.execute (
             'INSERT INTO Vendas (afiliado_id, valor) VALUES(?, ?)',
