@@ -53,6 +53,11 @@
             params.push(req.query.nome)
         }
 
+        if (req.body.referencia_id){
+            query += ' AND referencia_id = ?'
+            params.push(req.query.referencia_id)
+        }
+
         if (req.query.email) {
             query += ' AND email = ?'
             params.push(req.query.email)
