@@ -11,7 +11,7 @@ export const listarPagamentosPendentes = async (req, res) => {
     
     try {
         const [rows] = await pool.query(
-            `SELECT id, usuario_id, valor, status, data_pagamento FROM pagamentos ${campo}`,
+            `SELECT id, afiliado_id, valor, status, data_pagamento FROM pagamentos ${campo}`,
             [parametroStatus]
         )
             
@@ -30,7 +30,7 @@ export const listarPagamentosPendentes = async (req, res) => {
         
 export const criarPagamento = async (req, res) => {
 
-    if (!req.body.usuario_id || !req.body.valor) {
+    if (!req.body.afiliado_id || !req.body.valor) {
         return res.status(400).json({
             status: "error",
             message: "Campos obrigatórios não preenchidos"
@@ -38,14 +38,14 @@ export const criarPagamento = async (req, res) => {
     }
 
     try{
-        const [result] = await pool.execute('INSERT INTO pagamentos (usuario_id, valor, status) VALUES (?, ?, ?)', [req.body.usuario_id, req.body.valor, 'pendente']);
+        const [result] = await pool.execute('INSERT INTO pagamentos (afiliado_id, valor, status) VALUES (?, ?, ?)', [req.body.afiliado_id, req.body.valor, 'pendente']);
 
         res.status(201).json({
             status: "success",
-            message: "Usuário criado com sucesso",
+            message: "Pagamento criado com sucesso",
             data: {
                 id: result.insertId,
-                usuario_id: req.body.usario_id,
+                afiliado_id_id: req.body.afiliado_id,
                 valor: req.body.valor,
                 status: 'pendente'
             }
