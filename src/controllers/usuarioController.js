@@ -53,7 +53,7 @@
             params.push(req.query.nome)
         }
 
-        if (req.body.referencia_id){
+        if (req.query.referencia_id) {
             query += ' AND referencia_id = ?'
             params.push(req.query.referencia_id)
         }
