@@ -158,3 +158,50 @@ export const editarComissoes = async ( req, res ) => {
         })
     }
 }
+
+
+export const resumoComissoes = async (req, res) => {
+    try {
+        const afiliado_id = req.usuario.id
+
+        // 1. Total de comissões — vendas do afiliado + sub-afiliados
+        const [totalRows] = await pool.execute(`
+    SELECT SUM(v.valor * (c.percentual / 100)) AS total
+    FROM Vendas v
+    JOIN comissoes c ON c.usuario_id = v.afiliado_id
+    WHERE v.afiliado_id = ?
+    OR v.afiliado_id IN (
+        SELECT id FROM subafiliados WHERE referencia_id = ?
+    )
+`, [afiliado_id, afiliado_id])
+
+const [pagoRows] = await pool.execute(`
+    SELECT SUM(valor) AS total_pago
+    FROM pagamentos
+    WHERE afiliado_id = ? AND status = 'pago'
+`, [afiliado_id])
+
+
+        // 3. Cálculo do saldo
+        const totalComissoes = totalRows[0].total || 0
+        const valorPago = pagoRows[0].total_pago || 0
+        const saldoDisponivel = totalComissoes - valorPago
+
+        return res.status(200).json({
+            status: "success",
+            message: "Resumo de comissões",
+            data: {
+                totalComissoes,
+                valorPago,
+                saldoDisponivel
+            }
+        })
+
+    } catch(error) {
+        console.log(error)
+        return res.status(500).json({
+            status: "error",
+            message: "Erro ao buscar resumo de comissões"
+        })
+    }
+}
